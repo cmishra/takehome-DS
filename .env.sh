@@ -13,6 +13,10 @@ function buildImage() {
 
 function launchServer() {
    IMAGE=$(buildName $1)
-   docker run -p 8888:8888 -it --rm -v `pwd`:/workingdir \
+   docker run -it -p 27017:27017 --rm -v `pwd`:/workingdir \
        $IMAGE
+}
+
+function runScript() {
+    docker exec -it `docker ps -q` python /workingdir/run.py
 }
