@@ -11,21 +11,23 @@ git clone https://github.com/cmishra/takehome-DS.git
 cd takehome-DS
 ```
 
-2. Start mongodb 
+2. Add data to folder StackExchange_posts
+
+3. Start mongodb 
 
 ```
 . .env.sh
 buildImage && launchServer
 ```
 
-3. Run and save model
+4. Run and save model
 
 ```
 . .env.sh
 runScript
 ```
 
-4. **Bonus**: Inference with sentences/documents sent as command line arguments:
+5. **Bonus**: Inference with sentences/documents sent as command line arguments:
 
 ```
 runScript --inference conversations about my dog are the best! I love my dog :D
@@ -44,10 +46,9 @@ Validation set confusion matrix:
  [  0   0  84   0   0]
  [  5  13   4 424   6]
  [  0   0   2  12 397]]
-    
-Term-document matrix constructed with shape (5826, 7025)
+Term-document matrix constructed with 7025 features
 
-PCA used to reduce dimensionality to (5826, 800) retaining 0.953451105423 variance
+PCA used to reduce dimensionality to 800 retaining 0.953451105423 variance
 
 Model trained with train error 0.998773908779 test error 0.95823798627
 

@@ -27,7 +27,7 @@ class DiscussionDataset:
 
         corpus = {}
         labels = []
-        for t in self.topics:
+        for t in topics:
             corpus[t] = [
                 d["contents"] for d in self.client[self.db_name][t].find({})
             ]
@@ -121,11 +121,11 @@ if __name__ == "__main__":
         print("Validation set confusion matrix:")
         print(
             metrics.confusion_matrix(process.predict(test_feats), test_labels))
-        print("Term-document matrix constructed with shape {}\n".format(
-            process.shapes[1][1]))
+        print("Term-document matrix constructed with {} features\n".format(
+            process.shapes[1][1][1]))
         print(
             "PCA used to reduce dimensionality to {} retaining {} variance\n".
-            format(process.shapes[2][1],
+            format(process.shapes[2][1][1],
                    process.steps[2][1].explained_variance_ratio_.sum()))
         print("Model trained with train error {} test error {}\n".format(
             process.score(train_feats, train_labels),
