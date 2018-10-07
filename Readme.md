@@ -39,11 +39,12 @@ chetan@chetan-pc:~/projects/spine_takehome$ runScript
 Data uploaded to mongodb
 
 Validation set confusion matrix:
-[[1113    7    0    7    4]
-[   3 1516    0    6    4]
-[   0    0  293    0    0]
-[   5   15    6 1472    7]
-[   0    0    2   12 1354]]
+[[328   7   0   7   4]
+ [  3 442   0   6   4]
+ [  0   0  84   0   0]
+ [  5  13   4 424   6]
+ [  0   0   2  12 397]]
+    
 Term-document matrix constructed with shape (5826, 7025)
 
 PCA used to reduce dimensionality to (5826, 800) retaining 0.953451105423 variance

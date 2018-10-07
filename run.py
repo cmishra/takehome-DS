@@ -9,17 +9,16 @@ from sklearn import decomposition, linear_model, metrics, pipeline, base
 
 class DiscussionDataset:
     db_name = "stack"
-    topics = set()
 
     def __init__(self, mongo_url, data_folder):
         self.client = MongoClient(mongo_url)
-
+        topics = set()
         db = self.client[self.db_name]
         json_files = [f for f in os.listdir(data_folder) if f[-5:] == ".json"]
         for f in json_files:
             topic_name = f[:-11]
             topic = db[topic_name]
-            self.topics.add(topic_name)
+            topics.add(topic_name)
             with open(data_folder + "/" + f, "r") as fin:
                 for d in json.load(fin):
                     doc = [d["title"], d["body"]]
@@ -121,8 +120,7 @@ if __name__ == "__main__":
 
         print("Validation set confusion matrix:")
         print(
-            metrics.confusion_matrix(
-                process.predict(dataset.data), dataset.target))
+            metrics.confusion_matrix(process.predict(test_feats), test_labels))
         print("Term-document matrix constructed with shape {}\n".format(
             process.shapes[1][1]))
         print(
@@ -136,4 +134,7 @@ if __name__ == "__main__":
         with open(model_filepath, "wb") as f:
             pickle.dump(process, f)
         print("Model saved")
+
+        # delete data so future runs can upload without creating duplicates
+        # in a real system, we could prevent this by indexing based on a hash of timestamp+user+content.
         dataset.client.drop_database(dataset.db_name)
