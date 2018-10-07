@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import os, json, numpy as np
+import os, json, numpy as np, argparse, pickle
 from scipy import sparse
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -71,51 +71,69 @@ class PipelineWithShapes(pipeline.Pipeline):
 
 
 if __name__ == "__main__":
-    data_folder = "/workingdir/StackExchange_posts"
-    mongo_url = "mongodb://localhost:27017"
-    dataset = DiscussionDataset(mongo_url, data_folder)
-    print("Data uploaded to mongodb\n")
+    parser = argparse.ArgumentParser(
+        "Script to train and save an argument classifier")
+    parser.add_argument("--inference", nargs="*")
+    args = parser.parse_args()
 
-    steps = [("vectorizer",
-              CountVectorizer(
-                  stop_words=None, min_df=10, analyzer=plurality_stemming)),
-             ("todense", DenseTransformer()),
-             ("reduce_dims",
-              decomposition.PCA(
-                  n_components=800,
-                  whiten=True,
-                  svd_solver="randomized",
-                  random_state=40)),
-             ("classifier",
-              linear_model.LogisticRegressionCV(
-                  n_jobs=4,
-                  random_state=40,
-                  solver="lbfgs",
-                  multi_class="ovr",
-                  cv=10))]
+    model_filepath = "model.p"
+    if args.inference is not None:
+        with open(model_filepath, "rb") as f:
+            process = pickle.load(f)
+        print(
+            zip(process.steps[-1][-1].classes_,
+                process.predict_proba([" ".join(args.inference)])[0]))
+    else:
+        data_folder = "/workingdir/StackExchange_posts"
+        mongo_url = "mongodb://localhost:27017"
+        dataset = DiscussionDataset(mongo_url, data_folder)
+        print("Data uploaded to mongodb\n")
 
-    process = PipelineWithShapes(steps)
+        steps = [("vectorizer",
+                  CountVectorizer(
+                      stop_words=None, min_df=10,
+                      analyzer=plurality_stemming)),
+                 ("todense", DenseTransformer()),
+                 ("reduce_dims",
+                  decomposition.PCA(
+                      n_components=800,
+                      whiten=True,
+                      svd_solver="randomized",
+                      random_state=40)),
+                 ("classifier",
+                  linear_model.LogisticRegressionCV(
+                      n_jobs=4,
+                      random_state=40,
+                      solver="lbfgs",
+                      multi_class="ovr",
+                      cv=10))]
 
-    train_feats, test_feats, train_labels, test_labels = train_test_split(
-        dataset.data,
-        dataset.target,
-        stratify=dataset.target,
-        test_size=0.3,
-        random_state=40)
+        process = PipelineWithShapes(steps)
 
-    process.fit(train_feats, train_labels)
+        train_feats, test_feats, train_labels, test_labels = train_test_split(
+            dataset.data,
+            dataset.target,
+            stratify=dataset.target,
+            test_size=0.3,
+            random_state=40)
 
-    print("Validation set confusion matrix:")
-    print(
-        metrics.confusion_matrix(
-            process.predict(dataset.data), dataset.target))
-    print("Term-document matrix constructed with shape {}\n".format(
-        process.shapes[1][1]))
-    print("PCA used to reduce dimensionality to {} retaining {} variance\n".
-          format(process.shapes[2][1],
-                 process.steps[2][1].explained_variance_ratio_.sum()))
-    print("Model trained with train error {} test error {}\n".format(
-        process.score(train_feats, train_labels),
-        process.score(test_feats, test_labels)))
+        process.fit(train_feats, train_labels)
 
-    dataset.client.drop_database(dataset.db_name)
+        print("Validation set confusion matrix:")
+        print(
+            metrics.confusion_matrix(
+                process.predict(dataset.data), dataset.target))
+        print("Term-document matrix constructed with shape {}\n".format(
+            process.shapes[1][1]))
+        print(
+            "PCA used to reduce dimensionality to {} retaining {} variance\n".
+            format(process.shapes[2][1],
+                   process.steps[2][1].explained_variance_ratio_.sum()))
+        print("Model trained with train error {} test error {}\n".format(
+            process.score(train_feats, train_labels),
+            process.score(test_feats, test_labels)))
+
+        with open(model_filepath, "wb") as f:
+            pickle.dump(process, f)
+        print("Model saved")
+        dataset.client.drop_database(dataset.db_name)

@@ -18,5 +18,5 @@ function launchServer() {
 }
 
 function runScript() {
-    docker exec -it `docker ps -q` python /workingdir/run.py
+    docker exec -it `docker ps -q` python /workingdir/run.py "$@"
 }
